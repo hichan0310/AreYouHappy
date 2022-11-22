@@ -4,7 +4,7 @@ import mediapipe as mp
 import numpy as np
 from torch import FloatTensor as tensor
 import torch.nn as nn
-
+import matplotlib.pyplot as plt
 
 class learning(nn.Module):
     def __init__(self):
@@ -38,6 +38,8 @@ face_mesh = mp_face_mesh.FaceMesh(
 
 print('Running')
 error = "No Face"
+
+history=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 while True:
     res = ""
     success, img = cap.read()
@@ -54,10 +56,10 @@ while True:
         cv2.waitKey(1)
         continue
 
-    x_max=0
-    y_max=0
-    x_min=1
-    y_min=1
+    x_max = 0
+    y_max = 0
+    x_min = 1
+    y_min = 1
 
     for result in results.multi_face_landmarks:
         for _, lm in enumerate(result.landmark):
@@ -66,10 +68,11 @@ while True:
             if lm.x < x_min: x_min = lm.x
             if lm.y < y_min: y_min = lm.y
 
-    dx=480*(x_max-x_min)
-    dy=640*(y_max-y_min)
+    dx = 480 * (x_max - x_min)
+    dy = 640 * (y_max - y_min)
 
-    cropped=img[int(max(480*y_min-dx/3-dx/4, 0)):int(min(480*y_max+dx/3, 479)), int(max(640*x_min-dy/3, 0)):int(min(640*x_max+dy/3, 639))]
+    cropped = img[int(max(480 * y_min - dx / 3 - dx / 4, 0)):int(min(480 * y_max + dx / 3, 479)),
+              int(max(640 * x_min - dy / 3, 0)):int(min(640 * x_max + dy / 3, 639))]
     cv2.imwrite("now_img.jpg", cropped)
 
     try:
@@ -84,16 +87,22 @@ while True:
 
         prediction = model(tensor(data).view(1, -1))
         prediction = prediction.detach().numpy()
-        res = int(prediction[0] * 100)
-        res = str(int(res)) + '%'
-        print('\r' + res, end='')
+        res = prediction[0]
     except:
-        error="FaceMesh Error"
+        error = "FaceMesh Error"
+        res=0
 
     cropped = cv2.imread("now_img.jpg")
     cv2.putText(cropped, error, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     error = ""
-    cv2.putText(img, res, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     cv2.imshow("img", img)
     cv2.imshow("debug", cropped)
+    history.append(res)
+    history=history[1:20]
+    plt.ylim([0, 1])
+    plt.plot(range(19), history)
+    print('\r', float(res), end='')
+    plt.savefig('savefig.png')
+    plt.clf()
+    cv2.imshow("plot", cv2.imread('savefig.png'))
     cv2.waitKey(1)
