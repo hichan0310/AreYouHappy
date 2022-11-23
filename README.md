@@ -4,6 +4,12 @@
 
 ----
 
+필요 패키지
+
+torch, opencv-python, mediapipe, numpy, matplotlib
+
+----
+
 regression.py
 
 model.pth 파일을 가져와서 모델을 돌립니다
